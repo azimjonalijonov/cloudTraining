@@ -1,7 +1,7 @@
 {
   "hello_world" : {
     "name" : "hello_world",
-    "lambda_path" : "D:\\any\\tasks\\cloudTraining\\task1",
+    "lambda_path" : "D:\\any\\tasks\\cloudTraining\\task01",
     "version" : "1.0.0",
     "func_name" : "com.task1.HelloWorld",
     "deployment_package" : "task1-1.0.0.jar",
