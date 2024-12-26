@@ -45,7 +45,9 @@
         "request": {},
         "response": {
           "statusCode": 200,
-          "message": "Hello from Lambda"
+          "body": {
+            "message": "Hello from Lambda"
+          }
         }
       }
     ],
