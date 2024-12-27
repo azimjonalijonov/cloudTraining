@@ -54,7 +54,7 @@ public class ApiHandler implements RequestHandler<ApiGatewayEvent, Map<String, O
 	public static void addItem(String id, int principalId, String createdAt, String contentAsJSON) {
 		final AmazonDynamoDB client = AmazonDynamoDBClientBuilder.defaultClient();
 		System.out.println("Add Item Started");
-		String tableName = "Events";
+		String tableName = "cmtr-4d2d00ed-Events-test";
 
 		DynamoDB dynamoDb = new DynamoDB(client);
 
