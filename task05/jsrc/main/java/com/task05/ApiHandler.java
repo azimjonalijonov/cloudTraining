@@ -1,31 +1,5 @@
-//package com.task05;
-//
-//import com.amazonaws.services.lambda.runtime.Context;
-//import com.amazonaws.services.lambda.runtime.RequestHandler;
-//import com.syndicate.deployment.annotations.lambda.LambdaHandler;
-//import com.syndicate.deployment.model.RetentionSetting;
-//
-//import java.util.HashMap;
-//import java.util.Map;
-//
-//@LambdaHandler(
-//    lambdaName = "api_handler",
-//	roleName = "api_handler-role",
-//	isPublishVersion = true,
-//	aliasName = "${lambdas_alias_name}",
-//	logsExpiration = RetentionSetting.SYNDICATE_ALIASES_SPECIFIED
-//)
-//public class ApiHandler implements RequestHandler<Object, Map<String, Object>> {
-//
-//	public Map<String, Object> handleRequest(Object request, Context context) {
-//		System.out.println("Hello from lambda");
-//		Map<String, Object> resultMap = new HashMap<String, Object>();
-//		resultMap.put("statusCode", 200);
-//		resultMap.put("body", "Hello from Lambda");
-//		return resultMap;
-//	}
-//}
 package com.task05;
+
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
@@ -46,48 +20,47 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-@LambdaHandler(lambdaName = "api_handler",
+@LambdaHandler(
+		lambdaName = "api_handler",
 		roleName = "api_handler-role",
 		aliasName = "learn",
 		logsExpiration = RetentionSetting.SYNDICATE_ALIASES_SPECIFIED
 )
 public class ApiHandler implements RequestHandler<ApiGatewayEvent, Map<String, Object>> {
 
-	private ObjectMapper objectMapper = new ObjectMapper();
-	public Map<String, Object> handleRequest(ApiGatewayEvent request, Context context) {
+	private final ObjectMapper objectMapper = new ObjectMapper();
 
+	@Override
+	public Map<String, Object> handleRequest(ApiGatewayEvent request, Context context) {
+		// Generate unique ID and timestamp
 		String id = UUID.randomUUID().toString();
+		String createdAt = LocalDateTime.now().toString();
+
+		// Extract request details
 		int principalId = request.getPrincipalId();
-		String createdAt =  LocalDateTime.now().toString();
 		Map<String, String> content = request.getContent();
 		String contentAsJSON = convertToJSON(content);
 
-		System.out.println("Hello from lambda");
-		System.out.println(request);
+		context.getLogger().log("Processing request: " + request);
 
-		// add item to dynamo table
-		addItem(id, principalId, createdAt, contentAsJSON);
+		// Add item to DynamoDB
+		boolean success = addItem(id, principalId, createdAt, contentAsJSON);
 
-		Map<String, Object> resultMap = new HashMap<String, Object>();
-		resultMap.put("statusCode", 201);
-		resultMap.put("event", Map.of(
-				"id",id, //generated uuid v4
-				"principalId",principalId,
-				"createdAt", createdAt,
-				"body", content));
-		return resultMap;
+		if (!success) {
+			// Return 500 response in case of DynamoDB error
+			return createErrorResponse("Failed to process the request.");
+		}
+
+		// Construct and return success response
+		return createSuccessResponse(id, principalId, createdAt, content);
 	}
 
-	public static void addItem(String id, int principalId, String createdAt, String contentAsJSON) {
+	private boolean addItem(String id, int principalId, String createdAt, String contentAsJSON) {
 		final AmazonDynamoDB client = AmazonDynamoDBClientBuilder.defaultClient();
-		System.out.println("Add Item Started");
+		DynamoDB dynamoDb = new DynamoDB(client);
 		String tableName = "cmtr-580435c6-Events-test";
 
-		DynamoDB dynamoDb = new DynamoDB(client);
-
 		Table table = dynamoDb.getTable(tableName);
-
-		// Create an item with the attributes
 		Item item = new Item()
 				.withPrimaryKey("id", id)
 				.withInt("principalId", principalId)
@@ -97,30 +70,44 @@ public class ApiHandler implements RequestHandler<ApiGatewayEvent, Map<String, O
 		try {
 			PutItemOutcome putItemOutcome = table.putItem(item);
 			System.out.println("PutItemOutcome: " + putItemOutcome);
+			return true;
 		} catch (ResourceNotFoundException e) {
-			System.err.format("Error: The table \"%s\" can't be found.\n", tableName);
-			System.err.println("Be sure that it exists and that you've typed its name correctly!");
-			System.exit(1);
+			System.err.format("Error: Table \"%s\" not found.\n", tableName);
+			return false;
 		} catch (AmazonServiceException e) {
-			System.err.println(e.getMessage());
-			System.exit(1);
+			System.err.println("AWS Service Exception: " + e.getMessage());
+			return false;
 		}
-
-		System.out.println("Add Item finished: 201");
 	}
 
 	private String convertToJSON(Map<String, String> content) {
-		String contentAsJSON = null;
 		try {
-			contentAsJSON = objectMapper.writeValueAsString(content);
+			return objectMapper.writeValueAsString(content);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			System.err.println("Failed to convert content to JSON: " + e.getMessage());
+			return "{}"; // Return empty JSON on failure
 		}
-		return contentAsJSON;
 	}
 
-}
+	private Map<String, Object> createSuccessResponse(String id, int principalId, String createdAt, Map<String, String> content) {
+		Map<String, Object> resultMap = new HashMap<>();
+		resultMap.put("statusCode", 201);
+		resultMap.put("event", Map.of(
+				"id", id,
+				"principalId", principalId,
+				"createdAt", createdAt,
+				"body", content
+		));
+		return resultMap;
+	}
 
+	private Map<String, Object> createErrorResponse(String message) {
+		Map<String, Object> resultMap = new HashMap<>();
+		resultMap.put("statusCode", 500);
+		resultMap.put("error", message);
+		return resultMap;
+	}
+}
 
 class ApiGatewayEvent {
 	private int principalId;
