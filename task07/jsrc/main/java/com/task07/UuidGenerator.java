@@ -33,7 +33,7 @@ import java.util.stream.IntStream;
 public class UuidGenerator implements RequestHandler<Object, Map<String, Object>> {
 
 	private final AmazonS3 s3 = AmazonS3ClientBuilder.defaultClient();
-	private final String BUCKET_NAME = "cmtr-4d2d00ed-uuid-storage-test" + UUID.randomUUID();
+	private final String BUCKET_NAME = "cmtr-4d2d00ed-uuid-storage-test" ;
 	private final int NUMBER_OF_IDS_PER_FILE = 10;
 	private ObjectMapper objectMapper = new ObjectMapper();
 
