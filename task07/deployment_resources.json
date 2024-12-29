@@ -34,7 +34,7 @@
     ],
     "resource_type": "iam_role"
   },
-  "cmtr-4d2d00ed-uuid-storage-test": {
+  "uuid-storage": {
     "resource_type": "s3_bucket",
     "acl": "private",
     "location": "eu-central-1",
