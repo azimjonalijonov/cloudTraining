@@ -34,7 +34,14 @@
     ],
     "resource_type": "iam_role"
   },
-  "uuid-storage-test": {
+
+  "uuid_trigger": {
+    "resource_type": "cloudwatch_rule",
+    "rule_type": "schedule",
+    "region": "eu-central-1",
+    "expression": "rate(1 minute)"
+  },
+  "uuid-storage": {
     "resource_type": "s3_bucket",
     "acl": "private",
     "location": "eu-central-1",
@@ -45,12 +52,7 @@
       "ignore_public_acls": true,
       "block_public_policy": true,
       "restrict_public_buckets": true
-    }
-  },
-  "uuid_trigger": {
-    "resource_type": "cloudwatch_rule",
-    "rule_type": "schedule",
-    "region": "eu-central-1",
-    "expression": "rate(1 minute)"
+    },
+    "tags": {}
   }
 }
