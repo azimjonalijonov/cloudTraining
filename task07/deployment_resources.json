@@ -41,7 +41,7 @@
     "region": "eu-central-1",
     "expression": "rate(1 minute)"
   },
-  "uuid-storage": {
+  "cmtr-4d2d00ed-uuid-storage-test": {
     "resource_type": "s3_bucket",
     "acl": "private",
     "location": "eu-central-1",
